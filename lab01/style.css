@@ -322,7 +322,7 @@ tr:hover td { background: rgba(0,212,255,0.03); }
   min-height: 100px;
 }
 
-#logBox .log-sep { color: var(--border); }
+#logBox .log-sep { color: var(--accent3); }
 #logBox .log-val { color: var(--accent3); }
 #logBox .log-warn { color: var(--accent2); }
 #logBox .log-info { color: var(--accent); }
@@ -356,4 +356,5 @@ input[type="range"] {
   width: 100%;
   accent-color: var(--accent);
   margin-top: 4px;
+
 }
