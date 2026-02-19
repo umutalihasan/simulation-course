@@ -1,0 +1,359 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap');
+
+:root {
+  --bg: #04080f;
+  --panel: #080e1a;
+  --panel2: #060c18;
+  --border: #0d2040;
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --accent3: #7fff7f;
+  --accent4: #ffd700;
+  --text: #c8deff;
+  --muted: #4a6080;
+  --grid: rgba(0,212,255,0.05);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+header {
+  text-align: center;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+header h1 {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(16px, 2.5vw, 28px);
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0,212,255,0.5);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+header p { color: var(--muted); font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px;
+}
+
+.panel-title {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.field { margin-bottom: 10px; }
+
+label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+input[type="number"] {
+  width: 100%;
+  background: rgba(0,212,255,0.04);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,212,255,0.15); }
+
+/* Shape selector */
+.shape-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.shape-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 8px 4px;
+  text-align: center;
+  transition: all 0.2s;
+  font-size: 10px;
+  font-family: 'Exo 2', sans-serif;
+}
+
+.shape-btn .shape-icon { font-size: 20px; display: block; margin-bottom: 3px; }
+.shape-btn:hover, .shape-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,212,255,0.08);
+  box-shadow: 0 0 8px rgba(0,212,255,0.1);
+}
+
+/* Step buttons */
+.step-buttons { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+
+.step-btn {
+  flex: 1; min-width: 44px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 5px 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.step-btn:hover, .step-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,212,255,0.08);
+}
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.2s;
+  margin-top: 6px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid var(--accent);
+  font-weight: bold;
+}
+.btn-primary:hover { box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* Cd display badge */
+.cd-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+}
+
+.cd-val { color: var(--accent4); font-size: 15px; }
+
+/* Wind control */
+.wind-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Right column */
+.right-col { display: flex; flex-direction: column; gap: 12px; }
+
+/* Stats */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stat { background: var(--panel); padding: 10px 12px; text-align: center; }
+.stat-val { font-family: 'Share Tech Mono', monospace; font-size: 18px; color: var(--accent); }
+.stat-lbl { font-size: 9px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+
+/* Canvas */
+.canvas-wrap {
+  position: relative;
+  background: rgba(0,5,15,0.9);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+canvas { display: block; width: 100%; }
+
+.canvas-badge {
+  position: absolute;
+  top: 8px; right: 10px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  min-height: 34px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text);
+}
+
+.legend-line { width: 22px; height: 2px; border-radius: 1px; }
+
+/* Bottom section: table + log side by side */
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) { .bottom-row { grid-template-columns: 1fr; } }
+
+table { width: 100%; border-collapse: collapse; font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+
+th {
+  background: rgba(0,212,255,0.08);
+  color: var(--accent);
+  padding: 8px 10px;
+  text-align: left;
+  letter-spacing: 1px;
+  font-size: 9px;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+}
+
+td { padding: 7px 10px; border: 1px solid var(--border); color: var(--text); }
+tr:hover td { background: rgba(0,212,255,0.03); }
+.hl { color: var(--accent3); }
+.warn { color: var(--accent2); }
+
+/* Log panel */
+.log-panel {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+#logBox {
+  flex: 1;
+  overflow-y: auto;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-height: 200px;
+  min-height: 100px;
+}
+
+#logBox .log-sep { color: var(--border); }
+#logBox .log-val { color: var(--accent3); }
+#logBox .log-warn { color: var(--accent2); }
+#logBox .log-info { color: var(--accent); }
+
+.info-box {
+  background: rgba(0,212,255,0.03);
+  border: 1px solid rgba(0,212,255,0.1);
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+.info-box strong { color: var(--accent); }
+
+/* Atmo model badge */
+.atmo-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--accent4);
+  text-align: center;
+  padding: 4px;
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 3px;
+  margin-bottom: 8px;
+  background: rgba(255,215,0,0.04);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  margin-top: 4px;
+}

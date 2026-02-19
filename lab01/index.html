@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atmospheric Flight Simulator</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1> Atmospheric Flight Simulator</h1>
+    <p>EULER INTEGRATION - DRAG MODEL - ISA ATMOSPHERE- WIND - COMPARATIVE ANALYSIS</p>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT: Controls -->
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <!-- Object Shape -->
+      <div class="panel">
+        <div class="panel-title">Object Shape</div>
+        <div class="shape-grid" id="shapeBtns">
+          <button class="shape-btn active" data-cd="0.47" data-name="Sphere" onclick="selectShape(this)">
+            <span class="shape-icon"></span>Sphere
+          </button>
+          <button class="shape-btn" data-cd="0.04" data-name="Bullet" onclick="selectShape(this)">
+            <span class="shape-icon"></span>Bullet
+          </button>
+          <button class="shape-btn" data-cd="1.05" data-name="Cube" onclick="selectShape(this)">
+            <span class="shape-icon"></span>Cube
+          </button>
+          <button class="shape-btn" data-cd="0.04" data-name="Drop" onclick="selectShape(this)">
+            <span class="shape-icon"></span>Drop
+          </button>
+          <button class="shape-btn" data-cd="input" data-name="Custom" onclick="selectShape(this)">
+            <span class="shape-icon"></span>Custom
+          </button>
+        </div>
+        <div class="cd-badge">
+          <span style="color:var(--muted);font-size:10px;">DRAG COEFF Cd</span>
+          <span class="cd-val" id="cdDisplay">0.47</span>
+        </div>
+        <div class="field">
+          <label>Cross-section Area (m²)</label>
+          <input type="number" id="area" value="0.01" step="0.001" min="0.0001">
+        </div>
+        <div class="field">
+          <label>Mass (kg)</label>
+          <input type="number" id="mass" value="1" step="0.1" min="0.01">
+        </div>
+      </div>
+
+      <!-- Initial Conditions -->
+      <div class="panel">
+        <div class="panel-title">Initial Conditions</div>
+        <div class="field">
+          <label>Initial Altitude (m)</label>
+          <input type="number" id="y0" value="0" step="1" min="0" max="50000">
+        </div>
+        <div class="field">
+          <label>Initial Velocity (m/s)</label>
+          <input type="number" id="v0" value="100" step="1" min="1" max="5000">
+        </div>
+        <div class="field">
+          <label>Launch Angle (°)</label>
+          <input type="number" id="angle" value="45" step="1" min="1" max="89">
+        </div>
+      </div>
+
+      <!-- Atmosphere & Wind -->
+      <div class="panel">
+        <div class="panel-title">Environment</div>
+        <div class="atmo-badge"> ISA Realistic Atmosphere Model</div>
+
+        <div class="field">
+          <label>Atmosphere Model</label>
+          <select id="atmoModel" style="width:100%;background:rgba(0,212,255,0.04);border:1px solid var(--border);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:12px;padding:6px 8px;border-radius:3px;outline:none;">
+            <option value="isa">ISA (Realistic)</option>
+            <option value="const">Constant (ρ=1.225)</option>
+            <option value="const129">Constant (ρ=1.29)</option>
+          </select>
+        </div>
+
+        <div class="wind-row">
+          <div class="field">
+            <label>Wind Speed (m/s)</label>
+            <input type="number" id="windSpeed" value="0" step="0.5" min="-50" max="50">
+          </div>
+          <div class="field">
+            <label>Wind Dir (°)</label>
+            <input type="number" id="windDir" value="0" step="5" min="-180" max="180">
+          </div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-top:-4px;margin-bottom:8px;">
+          Wind dir: 0° = headwind, 90° = crosswind, 180° = tailwind
+        </div>
+
+        <div class="info-box">
+          <strong>ISA Model:</strong> ρ decreases with altitude.<br>
+          Troposphere (0–11km): T = 288.15 − 6.5·h/1000 K<br>
+          ρ = 1.225 · (T/288.15)^4.256 kg/m³
+        </div>
+      </div>
+
+      <!-- Time Step -->
+      <div class="panel">
+        <div class="panel-title">Time Step</div>
+        <div class="step-buttons" id="stepBtns">
+          <div class="step-btn active" data-step="1">1s</div>
+          <div class="step-btn" data-step="0.1">0.1s</div>
+          <div class="step-btn" data-step="0.01">0.01s</div>
+          <div class="step-btn" data-step="0.001">0.001s</div>
+          <div class="step-btn" data-step="0.0001">0.0001s</div>
+        </div>
+        <div class="field">
+          <label>Custom Step (s)</label>
+          <input type="number" id="customStep" value="1" step="0.0001" min="0.00001">
+        </div>
+        <button class="btn btn-primary" id="runBtn" onclick="simulate()">▶ RUN SIMULATION</button>
+        <button class="btn btn-secondary" onclick="clearAll()">✕ CLEAR ALL</button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Visualization -->
+    <div class="right-col">
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="stat-range">—</div><div class="stat-lbl">Range (m)</div></div>
+        <div class="stat"><div class="stat-val" id="stat-height">—</div><div class="stat-lbl">Max Height (m)</div></div>
+        <div class="stat"><div class="stat-val" id="stat-vel">—</div><div class="stat-lbl">Final Speed (m/s)</div></div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="cvs" height="400"></canvas>
+        <div class="canvas-badge" id="canvasBadge">NO DATA</div>
+      </div>
+      <div class="legend" id="legend"><span style="color:var(--muted);font-size:10px;font-family:'Share Tech Mono',monospace;">Run a simulation to see trajectories</span></div>
+    </div>
+  </div>
+
+  <!-- Bottom: Table + Log -->
+  <div class="bottom-row">
+    <div class="panel">
+      <div class="panel-title">Comparative Results Table</div>
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Shape</th>
+            <th>dt (s)</th>
+            <th>Range (m)</th>
+            <th>Max Height (m)</th>
+            <th>Final Speed (m/s)</th>
+            <th>Atmo Model</th>
+            <th>Wind (m/s)</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr><td colspan="7" style="text-align:center;color:var(--muted)">Run simulations to populate table</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="log-panel">
+      <div class="panel-title">Simulation Log</div>
+      <div id="logBox"></div>
+    </div>
+  </div>
+</div>
+<script src="source.js"></script>
+</body>
+</html>
