@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heat Equation Simulator</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<div class="app">
+
+<header>
+  <h1>Heat Equation · Advanced Simulator</h1>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <span class="badge">ρc ∂T/∂t = λ ∂²T/∂x² + Q</span>
+    <span class="badge chip-green">IMPLICIT · THOMAS ALGORITHM</span>
+  </div>
+</header>
+
+<div class="main-layout">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <div class="sidebar">
+
+    <!-- Material -->
+    <div class="panel">
+      <div class="panel-title">Material</div>
+      <div class="mat-grid" id="matBtns">
+        <button class="mat-btn active" onclick="setMat(this)"
+          data-rho="7800" data-c="460" data-lam="46"
+          data-drho="0" data-dc="0.5" data-dlam="0.015" data-name="Steel">STEEL</button>
+        <button class="mat-btn" onclick="setMat(this)"
+          data-rho="2700" data-c="900" data-lam="237"
+          data-drho="0" data-dc="0.3" data-dlam="0.05" data-name="Aluminum">ALUM</button>
+        <button class="mat-btn" onclick="setMat(this)"
+          data-rho="1000" data-c="4186" data-lam="0.6"
+          data-drho="0" data-dc="1.0" data-dlam="0.002" data-name="Water">WATER</button>
+        <button class="mat-btn" onclick="setMat(this)"
+          data-rho="8900" data-c="385" data-lam="401"
+          data-drho="0" data-dc="0.1" data-dlam="0.07" data-name="Copper">COPPER</button>
+        <button class="mat-btn custom-btn" id="mat-custom" onclick="setMat(this)" data-rho="" data-c="" data-lam="" data-drho="0" data-dc="0" data-dlam="0" data-name="Custom">CUSTOM</button>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>ρ (kg/m³)</label><input type="number" id="rho" value="7800" min="0.1"></div>
+        <div class="field"><label>c (J/kg·°C)</label><input type="number" id="c_heat" value="460" min="0.1"></div>
+      </div>
+      <div class="field"><label>λ (W/m·°C)</label><input type="number" id="lambda" value="46" step="0.1" min="0.001"></div>
+    </div>
+
+    <!-- Geometry & BC -->
+    <div class="panel">
+      <div class="panel-title">Geometry & Boundary</div>
+      <div class="two-col">
+        <div class="field"><label>Thickness L (m)</label><input type="number" id="L" value="0.1" step="0.01" min="0.001"></div>
+        <div class="field"><label>T₀ initial (°C)</label><input type="number" id="T0" value="20" step="1"></div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>T_left (°C)</label><input type="number" id="Tleft" value="200" step="1"></div>
+        <div class="field"><label>T_right (°C)</label><input type="number" id="Tright" value="20" step="1"></div>
+      </div>
+    </div>
+
+    <!-- Simulation steps -->
+    <div class="panel">
+      <div class="panel-title">Simulation Steps</div>
+      <div class="two-col">
+        <div class="field"><label>Time Step τ (s)</label><input type="number" id="tau" value="0.01" step="0.001" min="0.00001"></div>
+        <div class="field"><label>Space Step h (m)</label><input type="number" id="h" value="0.01" step="0.001" min="0.0001"></div>
+      </div>
+      <div class="field"><label>Sim Duration (s)</label><input type="number" id="simTime" value="2" step="0.5" min="0.1"></div>
+      <div class="info-box" style="margin-top:6px;">
+        <strong>Scheme:</strong> Implicit (unconditionally stable)<br>
+        <strong>Solver:</strong> Thomas tridiagonal algorithm
+      </div>
+    </div>
+
+    <!-- ═══ EXTRA FEATURES ═══ -->
+
+    <!-- FEATURE 1: Temperature-dependent properties -->
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="panel-title" style="margin:0;border:none;padding:0;">▸ Temp-Dependent Properties</div>
+        <button class="ftab" id="ftab-tdep" onclick="toggleFeature('tdep')">OFF</button>
+      </div>
+      <div class="info-box" style="margin-bottom:8px;">
+        λ(T) = λ₀ + dλ·T &nbsp;|&nbsp; c(T) = c₀ + dc·T<br>
+        Real materials change conductivity with temperature.
+      </div>
+      <div class="feature-section" id="fs-tdep">
+        <div class="two-col">
+          <div class="field"><label>dλ/dT (W/m·°C²)</label><input type="number" id="dlam" value="0.015" step="0.001"></div>
+          <div class="field"><label>dc/dT (J/kg·°C²)</label><input type="number" id="dc" value="0.5" step="0.1"></div>
+        </div>
+        <div class="info-box">
+          Steel example: λ decreases ~0.015 W/m·°C per °C rise.<br>
+          At 200°C: λ ≈ 46 − 0.015×200 = 43 W/m·°C
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURE 2: Convection BC -->
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="panel-title" style="margin:0;border:none;padding:0;">▸ Convection Boundaries</div>
+        <button class="ftab" id="ftab-conv" onclick="toggleFeature('conv')">OFF</button>
+      </div>
+      <div class="info-box" style="margin-bottom:8px;">
+        q = h_conv · (T_surface − T_ambient)<br>
+        Replaces fixed-temp BC with Newton's cooling law.
+      </div>
+      <div class="feature-section" id="fs-conv">
+        <div class="two-col">
+          <div class="field"><label>h_left (W/m²·°C)</label><input type="number" id="hL" value="25" step="1" min="0"></div>
+          <div class="field"><label>T_amb_left (°C)</label><input type="number" id="TambL" value="20" step="1"></div>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>h_right (W/m²·°C)</label><input type="number" id="hR" value="25" step="1" min="0"></div>
+          <div class="field"><label>T_amb_right (°C)</label><input type="number" id="TambR" value="20" step="1"></div>
+        </div>
+        <div class="info-box">
+          Typical h values: natural air 5–25, forced air 25–250, water 200–10000 W/m²·°C
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURE 3: Heat source -->
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="panel-title" style="margin:0;border:none;padding:0;">▸ Internal Heat Source</div>
+        <button class="ftab" id="ftab-src" onclick="toggleFeature('src')">OFF</button>
+      </div>
+      <div class="info-box" style="margin-bottom:8px;">
+        Q(x) = Q₀ · exp(−((x−x₀)/σ)²)<br>
+        Gaussian heat source at position x₀ (e.g. resistance wire, laser).
+      </div>
+      <div class="feature-section" id="fs-src">
+        <div class="field"><label>Q₀ — Peak Power (W/m³)</label><input type="number" id="Q0" value="500000" step="10000"></div>
+        <div class="two-col">
+          <div class="field"><label>x₀ — Position (m)</label><input type="number" id="Qx0" value="0.05" step="0.001"></div>
+          <div class="field"><label>σ — Width (m)</label><input type="number" id="Qsigma" value="0.01" step="0.001" min="0.001"></div>
+        </div>
+        <div class="field">
+          <label>Source Type</label>
+          <select id="srcType">
+            <option value="gaussian">Gaussian (localized)</option>
+            <option value="uniform">Uniform (everywhere)</option>
+            <option value="left">Left half only</option>
+          </select>
+        </div>
+        <div class="info-box">
+          Positive Q = heat generation (e.g. electric current).<br>
+          Negative Q = heat sink (e.g. cooling channel).
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="panel">
+      <div class="panel-title">Run</div>
+      <button class="btn btn-run" id="runBtn" onclick="runSimulation()">RUN SIMULATION</button>
+      <button class="btn btn-table" onclick="runAllTable()">FILL TABLE (all steps)</button>
+      <button class="btn btn-clear" onclick="clearAll()">CLEAR ALL</button>
+      <div class="prog-wrap"><div class="prog-bar" id="prog"></div></div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- ═══ RIGHT: VISUALIZATIONS ═══ -->
+  <div class="viz-col">
+
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val" id="s-center">—</div><div class="stat-lbl">Center T (°C)</div></div>
+      <div class="stat"><div class="stat-val" id="s-max">—</div><div class="stat-lbl">Max T (°C)</div></div>
+      <div class="stat"><div class="stat-val" id="s-min">—</div><div class="stat-lbl">Min T (°C)</div></div>
+      <div class="stat"><div class="stat-val" id="s-steps">—</div><div class="stat-lbl">Steps</div></div>
+    </div>
+
+    <!-- Profile canvas -->
+    <div class="canvas-wrap">
+      <div class="canvas-lbl">Temperature Profile T(x, t)</div>
+      <div class="canvas-r" id="tDisp">t = 0.000 s</div>
+      <canvas id="profileCvs" height="260"></canvas>
+      <div class="cbar-row">
+        <span class="cbar-lbl" id="cbMin">0°C</span>
+        <div class="cbar"></div>
+        <span class="cbar-lbl" id="cbMax">200°C</span>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <!-- Center T vs time -->
+      <div class="canvas-wrap">
+        <div class="canvas-lbl">Center T vs Time</div>
+        <canvas id="timeCvs" height="190"></canvas>
+      </div>
+      <!-- 2D Heatmap -->
+      <div class="canvas-wrap">
+        <div class="canvas-lbl">2D Space–Time Heatmap T(x, t)</div>
+        <canvas id="heatmapCvs" height="190"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Table -->
+<div class="tbl-section panel">
+  <div class="panel-title" id="tblTitle">Center Temperature — Comparative Table (°C)</div>
+  <table>
+    <thead>
+      <tr>
+        <th>τ \ h</th>
+        <th>h = 0.1 m</th><th>h = 0.01 m</th><th>h = 0.001 m</th><th>h = 0.0001 m</th>
+      </tr>
+    </thead>
+    <tbody id="tblBody">
+      <tr><td class="rh">τ = 0.1 s</td>   <td id="c_01_01">—</td>  <td id="c_01_001">—</td>  <td id="c_01_0001">—</td>  <td id="c_01_00001">—</td></tr>
+      <tr><td class="rh">τ = 0.01 s</td>  <td id="c_001_01">—</td> <td id="c_001_001">—</td> <td id="c_001_0001">—</td> <td id="c_001_00001">—</td></tr>
+      <tr><td class="rh">τ = 0.001 s</td> <td id="c_0001_01">—</td><td id="c_0001_001">—</td><td id="c_0001_0001">—</td><td id="c_0001_00001">—</td></tr>
+      <tr><td class="rh">τ = 0.0001 s</td><td id="c_00001_01">—</td><td id="c_00001_001">—</td><td id="c_00001_0001">—</td><td id="c_00001_00001">—</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="log-panel">
+  <div class="panel-title">Log</div>
+  <div id="logBox"></div>
+</div>
+</div><!-- /app -->
+<script src="source.js"></script>
+</body>
+</html>
