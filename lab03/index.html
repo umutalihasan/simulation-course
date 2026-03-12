@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>🌲🔥 Forest Fire CA</title>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div class="app">
+
+  <aside id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🌲🔥</div>
+      <div class="logo-title">FOREST FIRE</div>
+      <div class="logo-sub">Cellular Automata</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">▶ Simulation</div>
+      <div class="row">
+        <button id="btn-play">▶ Play</button>
+        <button id="btn-step">⏭ Step</button>
+      </div>
+      <div class="row">
+        <button id="btn-reset">🔄 Reset</button>
+        <button id="btn-clear">🗑 Clear</button>
+      </div>
+      <div class="gen-badge">GEN: <span id="stat-gen">0</span></div>
+      <label class="lbl">Speed (FPS)
+        <div class="sl-row"><input type="range" id="sl-speed" min="1" max="60" value="12"/><span class="sl-val" id="val-speed">12</span></div>
+      </label>
+      <label class="lbl">Tree Density
+        <div class="sl-row"><input type="range" id="sl-density" min="0.1" max="0.95" step="0.05" value="0.65"/><span class="sl-val" id="val-density">0.65</span></div>
+      </label>
+
+      <div class="grid-size-row">
+        <label class="lbl" style="flex:1">Cols <input type="number" id="inp-cols" class="num-inp" min="20" value="160"/></label>
+        <label class="lbl" style="flex:1">Rows <input type="number" id="inp-rows" class="num-inp" min="20" value="100"/></label>
+      </div>
+      <button id="btn-apply-grid" class="full-btn">⚡ Apply Grid Size</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">🖌 Draw Tool</div>
+      <div class="brush-grid">
+        <button class="brush-btn active" data-state="1">🌲 Tree</button>
+        <button class="brush-btn" data-state="2">🔥 Fire</button>
+        <button class="brush-btn" data-state="0">⬜ Empty</button>
+        <button class="brush-btn" data-state="4">💧 Wet</button>
+        <button class="brush-btn" data-state="5">🟡 Break</button>
+        <button class="brush-btn" data-state="3">🪨 Ash</button>
+      </div>
+      <label class="lbl">Brush Size
+        <div class="sl-row"><input type="range" id="sl-brush" min="1" max="5" value="2"/><span class="sl-val" id="val-brush">2</span></div>
+      </label>
+      <button class="full-btn" id="btn-firebreak">Draw Center Firebreak</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">⚙ Parameters</div>
+      <label class="lbl">Spread Probability
+        <div class="sl-row"><input type="range" id="sl-spread" min="0" max="1" step="0.01" value="0.8"/><span class="sl-val" id="val-spread">0.8</span></div>
+      </label>
+      <label class="lbl">Lightning Rate
+        <div class="sl-row"><input type="range" id="sl-ignite" min="0" max="0.02" step="0.0001" value="0.0005"/><span class="sl-val" id="val-ignite">0.0005</span></div>
+      </label>
+      <label class="lbl">Humidity
+        <div class="sl-row"><input type="range" id="sl-humidity" min="0" max="1" step="0.01" value="0.3"/><span class="sl-val" id="val-humidity">0.3</span></div>
+      </label>
+      <label class="lbl">Wind Strength
+        <div class="sl-row"><input type="range" id="sl-wind" min="0" max="1" step="0.01" value="0.4"/><span class="sl-val" id="val-wind">0.4</span></div>
+      </label>
+      <label class="lbl">Wind Direction
+        <select id="sel-wind">
+          <option value="N">↑ North</option>
+          <option value="S">↓ South</option>
+          <option value="E">→ East</option>
+          <option value="W">← West</option>
+          <option value="NE">↗ NE</option>
+          <option value="NW">↖ NW</option>
+          <option value="SE">↘ SE</option>
+          <option value="SW">↙ SW</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">📋 Active Rules</div>
+      <label class="rule-item"><input type="checkbox" id="chk-wind"      checked/> Wind Effect</label>
+      <label class="rule-item"><input type="checkbox" id="chk-humidity"  checked/> Humidity / Rain</label>
+      <label class="rule-item"><input type="checkbox" id="chk-lightning" checked/> Lightning</label>
+      <label class="rule-item"><input type="checkbox" id="chk-firebreak" checked/> Firebreak</label>
+      <label class="rule-item"><input type="checkbox" id="chk-growth"    checked/> Tree Regrowth</label>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">📊 Statistics</div>
+      <div class="stat-grid">
+        <span>🌲 Trees</span>   <strong id="stat-tree">0</strong>
+        <span>🔥 Burning</span> <strong id="stat-fire">0</strong>
+        <span>🪨 Burned</span>  <strong id="stat-burned">0</strong>
+        <span>💧 Wet</span>     <strong id="stat-wet">0</strong>
+        <span>🌿 Cover</span>   <strong id="stat-cover">0%</strong>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">💾 Export</div>
+      <div class="row">
+        <button id="btn-png">📷 PNG</button>
+        <button id="btn-json">📄 JSON</button>
+      </div>
+    </div>
+  </aside>
+
+  <div id="main">
+    <div id="topbar">
+      <span>FOREST FIRE CA</span>
+      <span class="sep">|</span>
+      <span>Trees: <span class="tv" id="tb-tree">0</span></span>
+      <span class="sep">|</span>
+      <span>Burning: <span class="tv" id="tb-fire">0</span></span>
+      <span class="sep">|</span>
+      <span>Cover: <span class="tv" id="tb-cover">0%</span></span>
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
