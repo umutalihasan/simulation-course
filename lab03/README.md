@@ -48,7 +48,6 @@ forest-fire-ca/
 │
 ├── index.html                  # Точка входа, разметка интерфейса
 ├── style.css                   # Стили UI
-├── package.json                # npm скрипт для запуска
 │
 └── src/
     ├── main.js                 # Инициализация, игровой цикл, EventBus-оркестровка
@@ -603,3 +602,4 @@ export class StatsPanel {
 | Браузеры           | Chrome 80+, Firefox 80+, Safari 14+, Edge 80+                        |
 
 ---
+
