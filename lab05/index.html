@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Random Events — Lab 5</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-logo">LAB<span>05</span></div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab(0)">
+        <span class="tab-num">01</span><span class="tab-name">ДА / НЕТ</span>
+      </button>
+      <button class="nav-tab" onclick="switchTab(1)">
+        <span class="tab-num">02</span><span class="tab-name">ШАР</span>
+      </button>
+    </div>
+    <div class="nav-right">
+      <span class="nav-seed" id="nav-seed">SEED —</span>
+      <input type="number" id="seed-input" class="seed-inp" placeholder="Зерно" value="12345" />
+      <button class="seed-btn" onclick="resetSeed()">СБРОС</button>
+    </div>
+  </nav>
+
+  <!-- ═══ PART 1: ДА / НЕТ ═══ -->
+  <section class="scene" id="scene-0">
+    <div class="scene-bg-label">I</div>
+
+    <div class="p1-layout">
+
+      <!-- LEFT: controls -->
+      <div class="card ctrl-card">
+        <div class="card-header">
+          <span class="card-tag">ПАРАМЕТРЫ</span>
+          <span class="card-title">Вероятности</span>
+        </div>
+
+        <div class="prob-controls">
+          <div class="prob-item">
+            <div class="prob-label-row">
+              <span class="pill yes-pill">ДА</span>
+              <span class="prob-display" id="yes-disp">0.50</span>
+            </div>
+            <div class="track">
+              <div class="track-fill yes-fill" id="yes-fill" style="width:50%"></div>
+              <input type="range" id="yes-range" min="0" max="100" value="50" oninput="updateYN(this.value)" />
+            </div>
+          </div>
+
+          <div class="prob-divider"><div class="div-line"></div><span>+</span><div class="div-line"></div></div>
+
+          <div class="prob-item">
+            <div class="prob-label-row">
+              <span class="pill no-pill">НЕТ</span>
+              <span class="prob-display" id="no-disp">0.50</span>
+            </div>
+            <div class="track">
+              <div class="track-fill no-fill" id="no-fill" style="width:50%"></div>
+              <input type="range" disabled min="0" max="100" value="50" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: single event -->
+        <button class="big-btn" onclick="genYN()">
+          <span class="btn-inner"><span>▶</span><span>ГЕНЕРИРОВАТЬ</span></span>
+          <span class="btn-shine"></span>
+        </button>
+
+        <!-- Slide 9: N-trial simulation -->
+        <div class="sim-row">
+          <input type="number" id="sim-n-1" class="sim-n-inp" value="1000" min="1" max="100000" />
+          <button class="sim-btn" onclick="runYNSimulation()">СИМУЛЯЦИЯ N</button>
+        </div>
+
+        <div class="algo-block">
+          <div class="algo-title">АЛГОРИТМ (Слайд 4)</div>
+          <div class="algo-text">
+            <code>α</code> ← МКГ() ∈ [0,1)<br>
+            если <code>α &lt; p(Да)</code> → <span class="yes-col">ДА</span><br>
+            иначе → <span class="no-col">НЕТ</span>
+          </div>
+        </div>
+
+        <div class="algo-block" style="margin-top:8px">
+          <div class="algo-title">СТАТИСТИКА (Слайд 9)</div>
+          <div class="algo-text">
+            <code>Statistics[m]=0;  n=0</code><br>
+            <code>while n &lt; N: генерация→k</code><br>
+            <code>Statistics[k]++;  n++</code><br>
+            <code>Frequency[k] = Statistics[k] / N</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: result + stats -->
+      <div class="result-col">
+        <div class="card result-card">
+          <div class="card-header"><span class="card-tag">РЕЗУЛЬТАТ</span></div>
+          <div class="result-stage" id="result-stage">
+            <div class="result-idle">?</div>
+            <div class="result-answer" id="yn-answer"></div>
+            <div class="result-alpha"  id="yn-alpha"></div>
+          </div>
+          <div class="burst" id="burst"></div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-val" id="s-total">0</div>
+            <div class="stat-lbl">N (всего)</div>
+          </div>
+          <div class="stat-card yes-stat">
+            <div class="stat-val" id="s-yes">0</div>
+            <div class="stat-lbl">n(Да)</div>
+          </div>
+          <div class="stat-card no-stat">
+            <div class="stat-val" id="s-no">0</div>
+            <div class="stat-lbl">n(Нет)</div>
+          </div>
+          <div class="stat-card freq-card">
+            <div class="stat-val" id="s-freq">—</div>
+            <div class="stat-lbl">p̂(Да) = n/N</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PART 2: ШАР ═══ -->
+  <section class="scene hidden" id="scene-1">
+    <div class="scene-bg-label">II</div>
+
+    <div class="p2-layout">
+
+      <!-- LEFT: ball + controls -->
+      <div class="ball-col">
+        <div class="card ball-card">
+          <div class="card-header">
+            <span class="card-tag">ОРАКУЛ</span>
+            <span class="card-title">Шар предсказаний</span>
+          </div>
+
+          <!-- Group probabilities -->
+          <div class="group-probs">
+            <div class="gp-row">
+              <span class="gpill pos-gpill">+ ПОЗИТИВНЫЕ</span>
+              <input type="number" id="prob-pos" class="gp-inp" min="0" max="1" step="0.01"
+                value="0.50" oninput="onProbChange()" />
+            </div>
+            <div class="gp-row">
+              <span class="gpill neu-gpill">~ НЕЙТРАЛЬНЫЕ</span>
+              <input type="number" id="prob-neu" class="gp-inp" min="0" max="1" step="0.01"
+                value="0.28" oninput="onProbChange()" />
+            </div>
+            <div class="gp-row">
+              <span class="gpill neg-gpill">− НЕГАТИВНЫЕ</span>
+              <input type="number" id="prob-neg" class="gp-inp" disabled value="0.22" />
+            </div>
+            <div class="sum-bar">
+              <span class="sum-label">Σ</span>
+              <div class="sum-track"><div class="sum-fill" id="sum-fill"></div></div>
+              <span class="sum-val ok" id="sum-val">1.000</span>
+            </div>
+          </div>
+
+          <!-- Ball -->
+          <div class="ball-stage">
+            <div class="ball-outer" id="ball" onclick="askBall()">
+              <div class="ball-inner">
+                <div class="ball-face idle" id="ball-face">8</div>
+                <div class="ball-glare"></div>
+              </div>
+              <div class="ball-shadow"></div>
+            </div>
+          </div>
+
+          <div class="q-wrap">
+            <input type="text" id="q-input" class="q-input" placeholder="Введите вопрос…"
+              onkeypress="if(event.key==='Enter') askBall()" />
+            <button class="ask-btn" onclick="askBall()">ASK</button>
+          </div>
+
+          <!-- Slide 9: N-trial simulation -->
+          <div class="sim-row">
+            <input type="number" id="sim-n-2" class="sim-n-inp" value="1000" min="1" max="100000" />
+            <button class="sim-btn" onclick="runBallSimulation()">СИМУЛЯЦИЯ N</button>
+          </div>
+
+          <div class="answer-display">
+            <div class="ans-placeholder">Нажмите на шар или ASK</div>
+            <div class="ans-main" id="ans-main"></div>
+            <div class="ans-sub"  id="ans-sub"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: outcomes table with statistics -->
+      <div class="outcomes-col">
+        <div class="card outcomes-card">
+          <div class="card-header">
+            <span class="card-tag">СТАТИСТИКА (Слайд 9)</span>
+            <span class="card-title">nₖ · p̂ₖ = nₖ/N · N=<span id="p2-total">0</span></span>
+          </div>
+
+          <!-- Column headers -->
+          <div class="oc-thead">
+            <span class="oc-idx">#</span>
+            <span class="oc-name">Ответ</span>
+            <span class="oc-nk">nₖ</span>
+            <span class="oc-freq">p̂ₖ</span>
+          </div>
+
+          <div class="outcomes-list" id="outcomes-list"></div>
+
+          <div class="algo-block" style="margin-top:10px">
+            <div class="algo-title">АЛГОРИТМ (Слайд 7)</div>
+            <div class="algo-text">
+              <code>A := α;  k := 1</code><br>
+              цикл: <code>A := A − pₖ</code><br>
+              если <code>A ≤ 0</code> → группа <code>k</code><br>
+              иначе: <code>k := k + 1</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="lcg.js"></script>
+  <script src="part1.js"></script>
+  <script src="part2.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
