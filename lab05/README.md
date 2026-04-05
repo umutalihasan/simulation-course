@@ -5,7 +5,7 @@
 **Реализация:** HTML, CSS, JavaScript.  
 **Основная идея:** генерация случайного числа `α ∈ [0,1)` и принятие решения на основе заданных вероятностей.
 
-**Live Demo: https://umut.ipmkn.ru**
+**Live Demo: https://umutyagcioglu.com**
 
 ---
 
