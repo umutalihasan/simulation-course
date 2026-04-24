@@ -2,8 +2,8 @@
 ## Имитационное моделирование случайных величин
 
 **Проект:** веб-приложение для выполнения лабораторной работы №6.  
-**Live Demo:** `umutyagcioglu.com`  
 **Реализация:** `HTML`, `CSS`, `JavaScript`.
+**Live Demo: https://umutyagcioglu.com** 
 
 ---
 
