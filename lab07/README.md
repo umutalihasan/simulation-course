@@ -2,7 +2,7 @@
 ## Моделирование погоды с помощью цепи Маркова
 
 **Проект:** веб-приложение для выполнения лабораторной работы №7.  
-**Live Demo:** `umutyagcioglu.com`  
+**Live Demo: https://umutyagcioglu.com** 
 **Реализация:** `HTML`, `CSS`, `JavaScript`.
 
 ---
