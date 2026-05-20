@@ -4,7 +4,8 @@
 **Проект:** веб-приложение для моделирования простейшего потока событий.  
 **Событие:** поступление запроса на сервер.  
 **Реализация:** `HTML`, `CSS`, `JavaScript`.
-**Live Demo:** `https://umutyagcioglu.com`  
+
+**Live Demo: https://umutyagcioglu.com**  
 
 ---
 
