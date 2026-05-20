@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Lab 8 - Poisson Server Request Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --ink: #132033;
+      --muted: #72819a;
+      --line: #dbe5f4;
+      --soft: #f4f8ff;
+      --panel: #ffffff;
+      --blue: #1f6fff;
+      --blue-dark: #174fb8;
+      --mint: #2f9e73;
+      --orange: #e98b28;
+      --red: #d94848;
+      --shadow: 0 22px 70px rgba(45, 76, 120, 0.18);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Outfit", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(31, 111, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(31, 111, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(135deg, #eef5ff 0%, #f9fbff 42%, #eff6f1 100%);
+      background-size: 28px 28px, 28px 28px, cover;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1760px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 26px 0 34px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 74px;
+      height: 74px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 12px 36px rgba(63, 92, 139, 0.12);
+      color: var(--blue);
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .headline h1 {
+      margin: 0;
+      font-size: clamp(30px, 3.1vw, 54px);
+      letter-spacing: 0;
+      line-height: 1.02;
+    }
+
+    .headline p {
+      margin: 9px 0 0;
+      max-width: 980px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .meta-card,
+    .ghost-btn {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(66, 93, 135, 0.08);
+    }
+
+    .meta-card {
+      padding: 14px 18px;
+      min-width: 230px;
+    }
+
+    .meta-card strong,
+    .meta-card span {
+      display: block;
+    }
+
+    .meta-card span {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .ghost-btn,
+    .run-btn,
+    .seed-btn {
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .ghost-btn {
+      padding: 14px 20px;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .ghost-btn:hover,
+    .run-btn:hover,
+    .seed-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 420px minmax(0, 1fr);
+      gap: 26px;
+      align-items: start;
+    }
+
+    .control-panel,
+    .content-panel {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .control-panel {
+      position: sticky;
+      top: 18px;
+      padding: 28px;
+    }
+
+    .content-panel {
+      min-height: 760px;
+      padding: 24px;
+    }
+
+    .panel-kicker,
+    .block-label,
+    .chart-kicker,
+    .tile-label {
+      color: #5f75a0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .panel-title {
+      margin: 12px 0 10px;
+      font-size: 34px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .panel-copy,
+    .chart-caption,
+    .table-card p,
+    .test-card p,
+    .status-card p {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    .panel-block {
+      margin-top: 26px;
+    }
+
+    .block-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .small-inline {
+      letter-spacing: 0.08em;
+      color: #6f7f99;
+      text-align: right;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .number-row {
+      display: grid;
+      grid-template-columns: 1fr 165px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .field-label {
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .field-label small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+
+    .field-box,
+    .select-box,
+    .seed-wrap {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      padding: 16px 18px;
+      font-size: 18px;
+    }
+
+    select {
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #7485a0 50%),
+        linear-gradient(135deg, #7485a0 50%, transparent 50%);
+      background-position:
+        calc(100% - 22px) calc(50% - 3px),
+        calc(100% - 16px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+    }
+
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 11px;
+      padding: 11px 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .chip-btn.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(31, 111, 255, 0.26);
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    .seed-row {
+      display: grid;
+      grid-template-columns: 1fr 54px;
+      gap: 10px;
+    }
+
+    .seed-btn {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      color: var(--blue);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .method-note {
+      border: 1px solid #cfe2ff;
+      border-radius: 16px;
+      padding: 16px;
+      background: #f7fbff;
+      color: #5f728d;
+      line-height: 1.55;
+    }
+
+    .alert {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 15px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .alert.err,
+    .alert.warn,
+    .alert.ok {
+      display: block;
+    }
+
+    .alert.err {
+      color: #842029;
+      background: #fff1f1;
+      border: 1px solid #ffd1d1;
+    }
+
+    .alert.warn {
+      color: #875300;
+      background: #fff8e8;
+      border: 1px solid #ffe4a8;
+    }
+
+    .alert.ok {
+      color: #1d6d4d;
+      background: #edf9f3;
+      border: 1px solid #cceede;
+    }
+
+    .run-btn {
+      width: 100%;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 16px;
+      padding: 18px 20px;
+      color: #fff;
+      background: linear-gradient(135deg, #1f6fff, #2f9e73);
+      box-shadow: 0 18px 40px rgba(31, 111, 255, 0.25);
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .panel-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .result-shell {
+      display: grid;
+      gap: 20px;
+    }
+
+    .chart-card,
+    .test-card,
+    .status-card,
+    .table-card,
+    .stat-tile {
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 14px 36px rgba(60, 90, 135, 0.09);
+    }
+
+    .chart-card,
+    .test-card,
+    .status-card,
+    .table-card {
+      padding: 24px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .chart-title {
+      margin: 6px 0 8px;
+      font-size: 27px;
+      line-height: 1.1;
+    }
+
+    .chart-caption {
+      margin: 0;
+      max-width: 760px;
+    }
+
+    .chart-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      align-content: start;
+      min-width: 260px;
+    }
+
+    .meta-pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft);
+      color: #627493;
+      padding: 9px 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 360px !important;
+    }
+
+    .dual-chart-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+      gap: 20px;
+    }
+
+    .compact-chart-card canvas {
+      height: 260px !important;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stat-tile {
+      padding: 18px;
+      min-height: 136px;
+    }
+
+    .tile-value {
+      margin-top: 18px;
+      color: var(--blue-dark);
+      font-size: 33px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .tile-foot {
+      margin-top: 10px;
+      color: var(--muted);
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .test-card h3,
+    .table-card h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .test-metric {
+      border-left: 1px solid var(--line);
+      padding-left: 15px;
+    }
+
+    .test-metric:first-child {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .test-metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .test-metric strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--blue-dark);
+      font-size: 24px;
+    }
+
+    .status-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      background: linear-gradient(135deg, #eefaf4, #ffffff);
+      border-color: #cbead9;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: #d9f2e6;
+      color: #1f7d57;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status-headline {
+      margin-top: 14px;
+      font-size: 27px;
+      font-weight: 700;
+      line-height: 1.18;
+    }
+
+    .status-extra {
+      max-width: 360px;
+      color: #507165;
+      line-height: 1.55;
+      font-weight: 600;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #5f728d;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    td {
+      font-weight: 600;
+      color: #1d2b42;
+    }
+
+    .placeholder-state {
+      display: grid;
+      min-height: 660px;
+      place-items: center;
+      border: 1px dashed #cbd9ec;
+      border-radius: 17px;
+      background: rgba(247, 250, 255, 0.72);
+      text-align: center;
+      padding: 30px;
+    }
+
+    .placeholder-state span {
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .placeholder-state h3 {
+      margin: 12px 0 8px;
+      font-size: 30px;
+    }
+
+    .placeholder-state p {
+      max-width: 620px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .footer-note {
+      margin-top: 20px;
+      border: 1px solid #cde0ff;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.76);
+      color: #3567bd;
+      padding: 14px 18px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 1180px) {
+      .workspace,
+      .dual-chart-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .control-panel {
+        position: static;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(100% - 22px, 1760px);
+        padding-top: 14px;
+      }
+
+      .topbar,
+      .brand,
+      .chart-header,
+      .status-card {
+        display: block;
+      }
+
+      .brand-mark {
+        margin-bottom: 14px;
+      }
+
+      .top-actions {
+        margin-top: 16px;
+        justify-content: stretch;
+      }
+
+      .meta-card,
+      .ghost-btn {
+        width: 100%;
+      }
+
+      .control-panel,
+      .content-panel {
+        padding: 18px;
+      }
+
+      .number-row,
+      .seed-row,
+      .metrics-grid,
+      .test-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .test-metric,
+      .test-metric:first-child {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+        padding-left: 0;
+        padding-top: 12px;
+      }
+
+      .test-metric:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      canvas {
+        height: 300px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">L8</div>
+        <div class="headline">
+          <h1>Poisson Server Request Flow</h1>
+          <p>
+            Lab 8 models a simple Poisson event stream where each event is an incoming request to a server.
+            The app estimates the distribution of request counts over a fixed interval T.
+          </p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="meta-card">
+          <strong>Simulation Modelling</strong>
+          <span>Lab 08 • Event flow</span>
+        </div>
+        <button class="ghost-btn" type="button" onclick="downloadPoissonCSV()">Export CSV</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="control-panel">
+        <div class="panel-kicker">Lab 08</div>
+        <h2 class="panel-title">Server flow parameters</h2>
+        <p class="panel-copy">
+          Set the request intensity, observation interval T, and number of repeated experiments.
+          The flow is generated through exponential inter-arrival times.
+        </p>
+
+        <div class="panel-block">
+          <div class="block-label">
+            <span>Poisson flow</span>
+            <span class="small-inline">lambda</span>
+          </div>
+          <div class="stack">
+            <div class="number-row">
+              <label class="field-label" for="p-lambda">Request intensity λ
+                <small>Average number of requests per minute</small>
+              </label>
+              <div class="field-box">
+                <input type="number" id="p-lambda" value="4" min="0.0001" step="0.1">
+              </div>
+            </div>
+            <div class="number-row">
+              <label class="field-label" for="p-interval">Interval length T
+                <small>This value is converted to minutes according to the selected unit</small>
+              </label>
+              <div class="field-box">
+                <input type="number" id="p-interval" value="3" min="0.0001" step="0.1">
+              </div>
+            </div>
+            <div class="number-row">
+              <label class="field-label" for="p-unit">Unit of T
+                <small>Minutes and hours change μ = λT</small>
+              </label>
+              <div class="select-box">
+                <select id="p-unit">
+                  <option value="minutes" selected>Minutes</option>
+                  <option value="hours">Hours</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <div class="block-label">
+            <span>Experiments</span>
+            <span class="small-inline">N</span>
+          </div>
+          <div class="chip-group" data-input="p-sample-size">
+            <button class="chip-btn" type="button" data-value="100">100</button>
+            <button class="chip-btn active" type="button" data-value="1000">1000</button>
+            <button class="chip-btn" type="button" data-value="5000">5000</button>
+            <button class="chip-btn" type="button" data-value="10000">10000</button>
+            <button class="chip-btn" type="button" data-value="50000">50000</button>
+          </div>
+          <input class="hidden-input" type="hidden" id="p-sample-size" value="1000">
+          <div class="number-row" style="margin-top: 12px;">
+            <label class="field-label" for="p-sample-custom">Custom N
+              <small>Enter your own number of intervals</small>
+            </label>
+            <div class="field-box">
+              <input type="number" id="p-sample-custom" min="1" step="1" placeholder="e.g. 25000">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <div class="block-label">
+            <span>Random seed</span>
+            <span class="small-inline">MCG</span>
+          </div>
+          <div class="seed-row">
+            <div class="seed-wrap">
+              <input type="number" id="p-seed" value="12345">
+            </div>
+            <button class="seed-btn" type="button" onclick="randomSeedPoisson()" title="Generate random seed">↻</button>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <div class="method-note">
+            <strong>Simple Poisson flow</strong><br>
+            Inter-arrival times are generated as τ = -ln(U) / λ. Here λ is measured in requests per minute,
+            so T is used in minutes or converted from hours to minutes before μ = λT is calculated.
+          </div>
+        </div>
+
+        <div id="p-alert" class="alert"></div>
+        <div class="panel-actions">
+          <button class="run-btn" type="button" onclick="runPoissonSimulation()">Run simulation</button>
+        </div>
+      </aside>
+
+      <main class="content-panel">
+        <div id="p-results">
+          <div class="placeholder-state">
+            <div>
+              <span>Ready</span>
+              <h3>Poisson flow results will appear here</h3>
+              <p>
+                Run the experiment to see the empirical request-count distribution,
+                the theoretical Poisson curve, sample timeline, mean, variance, and conclusion.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="footer-note">
+      The theoretical mean and variance of the number of requests in interval T are both equal to μ = λT.
+      Lambda is interpreted as requests per minute; the selected unit changes how T is converted.
+      With more experiments, empirical values should approach this theoretical value.
+    </div>
+  </div>
+
+  <script src="poisson.js"></script>
+</body>
+</html>
